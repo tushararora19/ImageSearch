@@ -44,7 +44,6 @@ import com.loopj.android.http.JsonHttpResponseHandler;
  * 6. Optional : share image with frens / email to yourself
  * 7. Optional : download image / save an image to photos folder
  * 8. requests fail after 64 images DONE
- * 9. new search query shows 8 images only and not all (first query shows 40 images) DONE
  */
 public class SearchScreenActivity extends Activity {
 
@@ -64,7 +63,7 @@ public class SearchScreenActivity extends Activity {
 
 	String final_url = "";
 	String site = "";
-	
+
 	String filename = "image_filters.txt";
 
 	@Override
@@ -80,6 +79,14 @@ public class SearchScreenActivity extends Activity {
 		// setupDisplayImgListener();
 		readFilters();
 
+	}
+
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus){
+			setupEndlessScrolling();
+		}
 	}
 
 	private void setupEndlessScrolling() {
@@ -189,6 +196,8 @@ public class SearchScreenActivity extends Activity {
 				img_results.clear();
 				searchImages (search_query.getQuery().toString(), 0);	// default offset is 0
 				setupEndlessScrolling();
+			} else {
+				Toast.makeText(getApplicationContext(), "Search Field can't be blank", Toast.LENGTH_SHORT).show();
 			}
 		} catch (FileNotFoundException e) {
 			Log.d(TAG, e.toString());
@@ -237,6 +246,9 @@ public class SearchScreenActivity extends Activity {
 						img_adapter.notifyDataSetInvalidated();
 					searchImages (search_query.getQuery().toString(), 0);
 					setupEndlessScrolling();
+				} 
+				else {
+					Toast.makeText(getApplicationContext(), "Search Field can't be blank", Toast.LENGTH_SHORT).show();
 				}
 				return false; 
 			}
@@ -298,7 +310,7 @@ public class SearchScreenActivity extends Activity {
 		InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
 	}
-	
+
 	private void searchImages(String query, int offset) {
 		AsyncHttpClient client = new AsyncHttpClient();
 
@@ -326,6 +338,8 @@ public class SearchScreenActivity extends Activity {
 						// always clear contents inside image results
 						// img_results.clear();
 						img_results.addAll(ImageResults.parseJsonImageResultsArray(img_results_arr));
+						if (img_results.isEmpty())
+							Toast.makeText(getApplicationContext(), "No Results to Display..", Toast.LENGTH_LONG).show();
 						Log.d(TAG, img_results.toString());
 						Toast.makeText(getApplicationContext(), "Searching....", Toast.LENGTH_LONG).show();
 						showAsImage();
@@ -339,11 +353,11 @@ public class SearchScreenActivity extends Activity {
 			final_url = "";
 			final_url = formFinalURL(new StringBuffer(baseUrl + "v=1.0&q=" + Uri.encode(query) + "&rsz=8&start="+(offset*8))); // 8 images per page
 			client.get(final_url, response_handler);
-			
+
 			InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 			imm.hideSoftInputFromWindow(search_query.getWindowToken(), 0);
 		} else {
-			// searchImages(query, 0);
+			Toast.makeText(getApplicationContext(), "Max Allowed is 64 results", Toast.LENGTH_SHORT).show();
 		}
 	}
 
